@@ -1,0 +1,82 @@
+import cv2
+import easyocr
+
+def capture_image_from_camera():
+    # Initialize the camera
+    camera = cv2.VideoCapture(0)
+    if not camera.isOpened():
+        print("Error: Could not open camera.")
+        return None
+
+    print("Press 'Space' to capture the image, or 'ESC' to exit.")
+    while True:
+        ret, frame = camera.read()
+        if not ret:
+            print("Error: Failed to capture frame.")
+            break
+
+        # Display the camera feed
+        cv2.imshow("Camera", frame)
+
+        key = cv2.waitKey(1)
+        if key == 27:  # ESC key to exit
+            break
+        elif key == 32:  # Space key to capture
+            captured_image = frame
+            break
+        
+
+    camera.release()
+    cv2.destroyAllWindows()
+
+    return captured_image if 'captured_image' in locals() else None
+
+def detect_text_and_save(image):
+    # Initialize EasyOCR Reader
+    reader = easyocr.Reader(['en'])
+
+    # Detect text
+    print("Detecting text...")
+    results = reader.readtext(image)
+
+    # Concatenate all detected text
+    detected_text = "\n".join([text[1] for text in results])
+
+    # Save text to file
+    with open("detected_text.txt", "w") as file:
+        file.write(detected_text)
+
+    print("Text detection completed. Results saved to 'detected_text.txt'.")
+
+if _name_ == "_main_":
+    # Capture image
+    captured_image = capture_image_from_camera()
+
+    if captured_image is not None:
+        # Convert to grayscale for better OCR results
+        grayscale_image = cv2.cvtColor(captured_image, cv2.COLOR_BGR2GRAY)
+
+        # Detect text and save to file
+        detect_text_and_save(grayscale_image)
+    else:
+        print("No image captured.")
+
+
+from gtts import gTTS 
+  
+# import Os module to start the audio file
+import os 
+
+fh = open("detected_text.txt", "r") 
+myText = fh.read().replace("\n", " ")
+
+# Language we want to use 
+language = 'en'
+
+output = gTTS(text=myText, lang=language, slow=False)
+
+output.save("output.mp3")
+fh.close()
+
+# Play the converted file  
+os.system("start output.mp3")
